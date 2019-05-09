@@ -1,0 +1,286 @@
+--2.	“Drop table,” “Create table,” and “Insert Into ..” commands
+--Drop Tables:                
+drop table Contract;
+drop table Facility;
+drop table Damaged;
+drop table Package;
+drop table Rent_pay;
+drop table complain;
+drop table Departments;
+drop table Apartment;
+drop table Building;
+drop table Resident;
+drop table Manager;
+drop table Promotion;
+
+
+
+    CREATE TABLE Building 
+    (Building# INT NOT NULL , 
+     Dep VARCHAR(15) NOT NULL ,
+     Room_Count INT ,
+     Rate INT ,
+     Building_Size VARCHAR(7) ,
+     Building_Name VARCHAR2(64) ,
+     PRIMARY KEY (Building#)
+     ) ;
+
+Insert into BUILDING values (1,'Building15',2,550,'132yd','Alpha');
+Insert into BUILDING values (2,'Building234',3,500,'156yd','Beta');
+Insert into BUILDING values (3,'Building234',3,500,'156yd','Gamma');
+Insert into BUILDING values (4,'Building234',3,500,'156yd','Delta');
+Insert into BUILDING values (5,'Building15',4,450,'100yd','Epsilon');
+Insert into BUILDING values (6,'Building67',4,450,'100yd','Zeta');
+Insert into BUILDING values (7,'Building67',2,550,'135yd','Eta');
+Insert into BUILDING values (8,'ClubHouse',null,null,'100yd','Oxford ClubHouse');
+Insert into BUILDING values (9,'Cargo',null,null,'30yd','Cargo');
+Insert into BUILDING values (10,'Janitor_room',null,null,'35yd','Janitor room');
+Commit;
+
+
+    CREATE TABLE Apartment 
+    (apt# INT NOT NULL , 
+     Building# INT NOT NULL ,
+     Pet_allowence CHAR(1),
+     Ele_Bill decimal(5,2),
+     Res_count INT ,
+     PRIMARY KEY (apt#),
+     FOREIGN KEY (Building#) REFERENCES Building(Building#)) ;
+
+Insert into Apartment values('1101', '1' ,'o' , '40', '1');
+Insert into Apartment values('1102', '1' ,'o' , '35', '1');
+Insert into Apartment values('2101', '2' ,'o' , '80', '3');
+Insert into Apartment values('2102', '2' ,'o' , '', '');
+Insert into Apartment values('3101', '3' ,'o' , '', '');
+Insert into Apartment values('3102', '3' ,'x' , '55', '2');
+Insert into Apartment values('4101', '4' ,'x' , '', '');
+Insert into Apartment values('4201', '4' ,'x' , '40', '1');
+Insert into Apartment values('5101', '5' ,'x' , '', '');
+Insert into Apartment values('5201', '5' ,'x' , '', '');
+Insert into Apartment values('6101', '6' ,'o' , '35', '1');
+Insert into Apartment values('6201', '6' ,'o' , '', '');
+Insert into Apartment values('7101', '7' ,'o' , '40', '1');
+Insert into Apartment values('7201', '7' ,'x' , '', '');
+Commit;
+
+CREATE TABLE Resident
+(ResID INT NOT NULL PRIMARY KEY,
+Res_Fname Char(12) Not null,
+Res_Lname Char(12) Not null,
+Res_phone varchar(15),
+Res_email varchar(25));
+
+INSERT INTO Resident Values('111111', 'Krag', 'Dawn', '662-111-1111','qqq@google.com');
+INSERT INTO Resident Values('222222', 'Tim', 'Cook', '662-222-2222','www@google.com');
+INSERT INTO Resident Values('333333', 'Kenny', 'Tong', '662-333-3333','eee@google.com');
+INSERT INTO Resident Values('444444', 'Sandie', 'Gardner', '662-444-4444','rrr@google.com');
+INSERT INTO Resident Values('555555', 'Kim', 'Baker', '662-555-5555','ttt@google.com');
+INSERT INTO Resident Values('666666', 'Lewes', 'Kedi', '662-666-6666','yyy@google.com');
+INSERT INTO Resident Values('777777', 'George', 'Hal', '662-777-7777','aaa@google.com');
+INSERT INTO Resident Values('888888', 'Marie', 'Smith', '662-888-8888','sss@google.com');
+INSERT INTO Resident Values('999999', 'Simon', 'Dominic', '662-999-9999','qwe@google.com');
+INSERT INTO Resident Values('101010', 'Carmen', 'Monahun', '662-101-1010','asd@google.com');
+
+commit;
+
+
+CREATE TABLE Manager
+(MgrID char(7) Not Null Primary Key,
+Mgr_Fname Char(12) Not Null,
+Mgr_Lname Char(12) Not Null,
+Mgr_Phone Varchar(15),
+Mgr_email Varchar(30),
+Mgr_password Varchar(25)
+);
+
+INSERT INTO Manager values('M123123', 'Jim', 'Bon', '662-123-1234', 'ddd@google.com', ’ddd’);
+INSERT INTO Manager values('M321321', 'Susan', 'Merc', '662-321-3210', 'fff@google.com', ’fff’);
+INSERT INTO Manager values('M456456', 'Tom', 'Kale', '662-456-4567', 'ggg@google.com', ‘ggg’);
+INSERT INTO Manager values('M654654', 'Anna', 'Galler', '662-654-6543', 'zzz@google.com', ‘zzz’);
+INSERT INTO Manager values('M789789', 'Paul', 'King', '662-789-7890', 'xxx@google.com', ‘xxx’);
+INSERT INTO Manager values('M987987', 'Lee', 'Timber', '662-987-9876', 'ccc@google.com', ‘ccc’);
+INSERT INTO Manager values('M134679', 'Kevin', 'Nell', '662-134-4679', 'zxc@google.com', ‘zxc’);
+INSERT INTO Manager values('M467913', 'Joe', 'Col', '662-467-7913', 'poi@google.com', ‘poi’);
+INSERT INTO Manager values('M791346', 'Anderson', 'Carl', '662-791-1346', 'lkj@google.com', ‘lkj’);
+
+commit;
+
+
+CREATE TABLE Promotion 
+(Promo# char(7) NOT NULL,
+Deduction DECIMAL (5,2),
+Promo_Exp CHAR(8),
+Promo_name VARCHAR(18),
+Bonus DECIMAL(5, 2),
+PRIMARY KEY(Promo#)
+);
+
+INSERT INTO Promotion values('pro1', 0.25,'6M', 'Short_term_renewal', '');
+INSERT INTO Promotion values('pro2', 0.05, '6M', 'Short_term_extend', 50.00);
+INSERT INTO Promotion values('pro3', 0.08, '1Y', 'long_term_renewal', 50.00);
+INSERT INTO Promotion values('pro4', 0.1, '1Y', 'Long_term_extend', 100.00);
+INSERT INTO Promotion values('pro5', 0.15, '2Y', '2yr_ctr', 200.00);
+INSERT INTO Promotion values('pro6', 0.15, '1Y', '1yr_special', 100.00);
+INSERT INTO Promotion values('pro7', 0.20, '2Y', '2yr_special', 200.00);
+INSERT INTO Promotion values('pro8', 0, '', 'Welcome_gift_50', 50.00);
+INSERT INTO Promotion values('pro9', 0, '', 'Welcome_gift_100', 100.00);
+INSERT INTO Promotion values('pro10', 0.25, '2Y', 'Special_pro', 150.00);
+commit;
+
+
+CREATE TABLE Contract
+( ResID INT NOT NULL ,
+apt# INT NOT NULL ,
+Con_start_Date DATE,
+Con_Exp_Date DATE,
+Promo# char(7) REFERENCES Promotion(Promo#),
+PRIMARY KEY (ResId),
+FOREIGN KEY(apt#) REFERENCES Apartment(apt#)
+);
+
+INSERT INTO Contract values('111111', '1101', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('01/31/2018', 'mm/dd/yyyy'), 'pro2');
+INSERT INTO Contract values('222222', '1102', to_date('01/01/2017', 'mm/dd/yyyy'), to_date('12/31/2017', 'mm/dd/yyyy'), 'pro3');
+INSERT INTO Contract values('333333', '2101', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('07/31/2018', 'mm/dd/yyyy'), 'pro4');
+INSERT INTO Contract values('444444', '2101', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('07/31/2018', 'mm/dd/yyyy'), 'pro3');
+INSERT INTO Contract values('555555', '2101', to_date('07/01/2017', 'mm/dd/yyyy'), to_date('12/31/2018', 'mm/dd/yyyy'), 'pro1');
+INSERT INTO Contract values('666666', '3102', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('07/31/2018', 'mm/dd/yyyy'), 'pro4');
+INSERT INTO Contract values('777777', '3102', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('07/31/2018', 'mm/dd/yyyy'), 'pro4');
+INSERT INTO Contract values('888888', '4201', to_date('01/01/2017', 'mm/dd/yyyy'), to_date('12/31/2018', 'mm/dd/yyyy'), 'pro5');
+INSERT INTO Contract values('999999', '6101', to_date('01/01/2016', 'mm/dd/yyyy'), to_date('12/31/2017', 'mm/dd/yyyy'), 'pro7');
+INSERT INTO Contract values('101010', '7101', to_date('08/01/2017', 'mm/dd/yyyy'), to_date('07/31/2018', 'mm/dd/yyyy'), 'pro9');
+
+commit;
+
+
+CREATE TABLE Complain
+(Com# CHAR(4) NOT NULL ,
+ResID INT,
+Issue VarChar(20),
+Com_rec_date DATE,
+Com_solved_date DATE,
+PRIMARY KEY (Com#, ResID)
+);
+
+Insert into Complain values('C1', '333333', 'Sink', to_date('08/27/2017', 'mm/dd/yyyy'), to_date('08/30/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C2', '333333', 'Bathtub', to_date('08/27/2017', 'mm/dd/yyyy'), to_date('08/30/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C3', '111111', 'Stove', to_date('09/02/2017', 'mm/dd/yyyy'), to_date('09/08/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C4', '777777', 'LightBulb', to_date('09/11/2017', 'mm/dd/yyyy'), to_date('09/13/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C5', '777777', 'Electric', to_date('09/11/2017', 'mm/dd/yyyy'), to_date('09/13/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C6', '666666', 'Disposal', to_date('09/24/2017', 'mm/dd/yyyy'), to_date('09/29/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C7', '666666', 'Dish_washer', to_date('09/24/2017', 'mm/dd/yyyy'), to_date('09/26/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C8', '222222', 'Internet', to_date('10/12/2017', 'mm/dd/yyyy'), to_date('10/18/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C9', '111111', 'Sink', to_date('10/20/2017', 'mm/dd/yyyy'), to_date('10/22/2017', 'mm/dd/yyyy'));
+Insert into Complain values('C10', '888888', 'Electric', to_date('11/08/2017', 'mm/dd/yyyy'), to_date('', 'mm/dd/yyyy'));
+
+commit;
+
+CREATE TABLE Departments 
+(Dep VARCHAR(15) NOT NULL PRIMARY KEY,
+MgrID Char(7) REFERENCES Manager(MgrID),
+Hotline_num varchar(3),
+Location Varchar(20),
+Opening_hour Char(15)
+);
+
+INSERT INTO Departments values('Frontdesk', 'M456456', '101', 'ClubHouse', '07:30~17:00');
+INSERT INTO Departments values('Office', 'M654654', '102', 'ClubHouse', '07:30~17:00');
+INSERT INTO Departments values('Storage', ‘M789789’, '', 'ClubHouse', 'permanent');
+INSERT INTO Departments values('Guestroom', 'M456456', '', 'ClubHouse', 'permanent');
+INSERT INTO Departments values('Mailbox', ‘M789789’, '', 'ClubHouse', 'permanent');
+INSERT INTO Departments values('Building15', 'M123123', '103', 'Apartment', '08:00~16:00');
+INSERT INTO Departments values('Building234', 'M321321', '104', 'Apartment', '08:00~16:00');
+INSERT INTO Departments values('Building67', 'M987987', '105', 'Apartment', '08:00~16:00');
+INSERT INTO Departments values('Janitor', 'M134679', '106', 'FrontYard', '09:00~18:00');
+INSERT INTO Departments values('Headquarter', 'M791346', '100', 'Oxford', '08:00~17:00');
+commit;
+
+
+
+CREATE TABLE Facility 
+( Facil# Char(3) NOT NULL PRIMARY KEY,
+Dep VARCHAR(15),
+Item Char(25),
+Fac_cost decimal(6, 2),
+Acquision_date DATE,
+FOREIGN KEY(Dep) REFERENCES Departments(Dep)
+);
+
+Insert Into Facility Values('F1', 'Office', 'Desktop', 700, to_date('07/25/2015', 'mm/dd/yyyy'));
+Insert Into Facility Values('F2', 'Office', 'Printer', 350, to_date('07/25/2015', 'mm/dd/yyyy'));
+Insert Into Facility Values('F3', 'Office', 'Fax', 200, to_date('07/25/2015', 'mm/dd/yyyy'));
+Insert Into Facility Values('F4', 'Frontdesk', 'Laptop', 750, to_date('07/25/2015', 'mm/dd/yyyy'));
+Insert Into Facility Values('F5', 'Frontdesk', 'Coffe_machine', 325, to_date('03/13/2016', 'mm/dd/yyyy'));
+Insert Into Facility Values('F6', 'Guestroom', 'Television', 450, to_date('03/13/2016', 'mm/dd/yyyy'));
+Insert Into Facility Values('F7', 'Guestroom', 'Projector', 250, to_date('03/13/2016', 'mm/dd/yyyy'));
+Insert Into Facility Values('F8', 'Guestroom', 'Vending_machine', 650, to_date('07/05/2016', 'mm/dd/yyyy'));
+Insert Into Facility Values('F9', 'Office', 'Carpet', 200, to_date('08/10/2016', 'mm/dd/yyyy'));
+Insert Into Facility Values('F10', 'Janitor', 'Heater', 150, to_date('08/16/2016', 'mm/dd/yyyy'));
+
+commit;
+
+
+CREATE TABLE Damaged
+(DamID char(4) NOT NULL Primary Key,
+apt# INT ,
+Dam_Item varchar(20),
+Dam_Cost decimal(6, 2),
+Fixed char,
+foreign key(apt#) references Apartment(apt#) 
+);
+
+Insert into Damaged values('D1', '1102', 'Window', 100, 'o');
+Insert into Damaged values('D2', '2101', 'Refregerator', 250, 'o');
+Insert into Damaged values('D3', '2102', 'Door', 80, 'o');
+Insert into Damaged values('D4', '5101', 'Sink', 30, 'o');
+Insert into Damaged values('D5', '4101', 'Pipe', 50, 'x');
+Insert into Damaged values('D6', '4201', 'Pipe', 50, 'x');
+Insert into Damaged values('D7', '6101', 'Wall', 40, 'x');
+Insert into Damaged values('D8', '7201', 'Couch', 35, 'o');
+Insert into Damaged values('D9', '3102', 'Window', 100, 'x');
+Insert into Damaged values('D10', '1101', 'Dishwasher', 125, 'x');
+
+commit;
+
+
+CREATE TABLE Package
+(Pac# char(6) not null Primary key,
+ResID INT NOT NULL,
+Pac_Size char,
+Pac_arr DATE,
+Pickup char,
+FOREIGN KEY(ResID) references Resident(ResID)
+);
+
+INSERT INTO Package values('pac1', '222222','M', To_Date('08/09/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac2', '222222','L', To_Date('09/10/2017', 'mm/dd/yyyy'), 'x');
+INSERT INTO Package values('pac3', '555555','L', To_Date('09/12/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac4', '777777','S', To_Date('09/12/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac5', '888888','M', To_Date('09/17/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac6', '111111','M', To_Date('09/22/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac7', '111111','L', To_Date('09/22/2017', 'mm/dd/yyyy'), 'x');
+INSERT INTO Package values('pac8', '999999','S', To_Date('10/29/2017', 'mm/dd/yyyy'), 'x');
+INSERT INTO Package values('pac9', '444444','L', To_Date('11/03/2017', 'mm/dd/yyyy'), 'o');
+INSERT INTO Package values('pac10', '222222','M', To_Date('11/04/2017', 'mm/dd/yyyy'), 'x');
+
+commit;
+
+CREATE TABLE Rent_pay
+(Pay# Char(6) not null primary key,
+ResID INT not null,
+paid_date date,
+Paid_amt decimal (6, 2),
+Foreign key (ResID) references Resident (ResID)
+);
+
+Insert into Rent_pay values('pay001', '222222', to_date('10/01/2017', 'mm/dd/yyyy'), 585);
+Insert into Rent_pay values('pay002', '444444', to_date('10/02/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay003', '777777', to_date('10/02/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay004', '222222', to_date('11/01/2017', 'mm/dd/yyyy'), 535);
+Insert into Rent_pay values('pay005', '333333', to_date('11/02/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay006', '555555', to_date('11/02/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay007', '666666', to_date('11/02/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay008', '777777', to_date('11/03/2017', 'mm/dd/yyyy'), 527);
+Insert into Rent_pay values('pay009', '888888', to_date('11/03/2017', 'mm/dd/yyyy'), 540);
+Insert into Rent_pay values('pay010', '111111', to_date('11/04/2017', 'mm/dd/yyyy'), 590);
+
+commit;
