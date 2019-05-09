@@ -1,0 +1,1740 @@
+--1)
+--provide apartmenet information using package's function and procedure
+--Building number, building name, building manager and assigned department,
+--people who lives in the apartment, apartment monthly rate, and building size
+--create package head of sub_info_name.
+--Exception string shows, in case of wrong apartment info input.
+------------------------------
+--create package
+create or replace PACKAGE sub_info_name
+IS
+FUNCTION sub_info_mgr_pos
+(mgr_id MANAGER.MGRID%type)
+RETURN VARCHAR2;
+
+procedure sub_info_damaged
+(aptnum Damaged.apt#%type);
+
+procedure sub_info_pet
+(p_allw Apartment.Pet_allowence%type);
+
+End sub_info_name;
+/
+---------------------------------------------------
+--package body sub information of apartment and building 
+create or replace PACKAGE BODY sub_info_name
+IS
+-----------------------------
+-- Damaged Item finder
+procedure sub_info_damaged
+(aptnum IN Damaged.apt#%type)
+IS
+DAM_num INT;
+BEGIN
+    SELECT COUNT(damID)
+    INTO DAM_num
+    FROM damaged
+    WHERE apt# = aptnum;
+    IF DAM_num > 0 THEN
+    DBMS_OUTPUT.PUT_LINE('APT# '||aptnum|| ' has '||DAM_num||' Damaged Item(s).');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('APT#' ||aptnum|| ' is just fine like new!');
+    END IF;
+END sub_info_damaged;
+----------------------------------------------------
+--INFORMATION OF MANAGER'S POSITION
+FUNCTION sub_info_mgr_pos
+(mgr_id MANAGER.MGRID%type)
+RETURN VARCHAR2
+IS
+   ret_mgr_pos VARCHAR2(30);
+BEGIN
+  IF mgr_id        = 'M123123' THEN
+    ret_mgr_pos := 'Building_15_Manager';
+  Elsif mgr_id     = 'M321321' THEN
+    ret_mgr_pos := 'Building_234_Manager';
+  Elsif mgr_id     = 'M456456' THEN
+    ret_mgr_pos := 'Front desk';
+  Elsif mgr_id     = 'M654654' THEN
+    ret_mgr_pos := 'Office Manager';
+  Elsif mgr_id     = 'M789789' THEN
+    ret_mgr_pos := 'Property Manager';
+  Elsif mgr_id     = 'M987987' THEN
+    ret_mgr_pos := 'Building_78_Manager';
+  Elsif mgr_id     = 'M134679' THEN
+    ret_mgr_pos := 'Janitor';
+  Elsif mgr_id     = 'M467913' THEN
+    ret_mgr_pos := 'Janitor';
+  Elsif mgr_id     = 'M791346' THEN
+    ret_mgr_pos := 'Headquarter';
+  ELSE
+    ret_mgr_pos := 'N/A';
+  END IF;
+RETURN ret_mgr_pos;
+END sub_info_mgr_pos;
+-------------------------------
+--pet allowence finder
+PROCEDURE sub_info_pet
+(p_allw Apartment.Pet_allowence%type)
+IS
+BEGIN
+    IF p_allw = 'o' THEN
+    DBMS_OUTPUT.PUT_LINE('Pet allowence : Yes');
+    ELSE
+    DBMS_OUTPUT.PUT_LINE('You cannot bring your pet. sorry');
+    END IF;
+END sub_info_pet;
+
+END;
+
+/
+------------------------------
+--run main sql
+SET serveroutput ON;
+
+DECLARE
+    b_number BUILDING.BUILDING#%type := '';
+    depart BUILDING.Dep%type := '';
+    apt_num Apartment.apt#%type;
+    rooms number;
+    b_rate decimal(6,2);
+    b_size Building.Building_Size%type;
+    b_name varchar2(64);
+    pet_allw Apartment.Pet_allowence%type;
+    num_res number;
+    b_mgr_fn Manager.Mgr_Fname%type;
+    b_mgr_ln Manager.Mgr_Lname%type;
+    b_mgr_id Manager.MgrID%type;
+    b_mgr_ph Manager.Mgr_Phone%type;
+    b_mgr_pos VARCHAR2(30);
+    
+    ex_apt EXCEPTION;
+    PRAGMA EXCEPTION_INIT(ex_apt,-06502);
+    
+BEGIN
+    apt_num := '&ENTER_APARTMENT_NUMBER'; --enter 1101
+    SELECT Building#, Pet_allowence, Res_count
+    INTO b_number, pet_allw, num_res FROM Apartment 
+    WHERE apt# = apt_num;
+    
+    SELECT Dep, Room_Count, Rate, Building_Size, Building_name
+    INTO depart, rooms, b_rate, b_size, b_name
+    FROM Building 
+    WHERE Building# = b_number;
+
+    SELECT M.MgrID, Mgr_Fname, Mgr_Lname, Mgr_Phone 
+    INTO b_mgr_id, b_mgr_fn, b_mgr_ln, b_mgr_ph
+    FROM Manager M, Departments D, Building B, Apartment A
+    WHERE M.MgrID = D.MgrID 
+    AND D.Dep = B.Dep
+    AND B.Building# = A.Building#
+    AND A.apt# = apt_num;
+
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Thanks for using apartment info finder');
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Information of Apartment number :'||apt_num);
+    DBMS_OUTPUT.PUT_LINE('It is on Building number :'||b_number);
+    DBMS_OUTPUT.PUT_LINE('The building has a name of : '||b_name);
+    DBMS_OUTPUT.PUT_LINE('managed by Department :'||depart);
+    DBMS_OUTPUT.PUT_LINE('Building manager is : '
+    ||trim(b_mgr_fn)||' '||trim(b_mgr_ln));
+    DBMS_OUTPUT.PUT_LINE('It has '||rooms||' rooms');
+    DBMS_OUTPUT.PUT_LINE('Now '||num_res||' people in the unit');
+    DBMS_OUTPUT.PUT_LINE('Rate : $'||b_rate);    
+    DBMS_OUTPUT.PUT_LINE('Building Size :'||b_size);
+    sub_info_name.sub_info_pet(pet_allw);
+    sub_info_name.sub_info_damaged(apt_num);
+    
+    DBMS_OUTPUT.PUT_LINE('');
+    b_mgr_pos := sub_info_name.sub_info_mgr_pos(b_mgr_id);
+    DBMS_OUTPUT.PUT_LINE('For more information, contact with :');
+    DBMS_OUTPUT.PUT_LINE(b_mgr_pos||' ;'||b_mgr_ph);
+    
+    EXCEPTION
+    WHEN ex_apt THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Apartment number input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper Apartment number!');
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('APT#: "'||apt_num||'" is not in the data. ');
+    DBMS_OUTPUT.PUT_LINE('Try other Apartment number. ');
+    WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('A problem has ocurred in retrieving your saved data.');
+    DBMS_OUTPUT.PUT_LINE('Please contact with Tech Support via email.');
+END;
+/
+--------------------------------------------------
+--output check
+--when 1101 entered
+/*
+Thanks for using apartment info finder
+
+Information of Apartment number :1101
+It is on Building number :1
+The building has a name of : Alpha
+managed by Department :Building15
+Building manager is : Jim Bon
+It has 2 rooms
+Now 1 people in the unit
+Rate : $550
+Building Size :132yd
+Pet allowence : Yes
+
+For more information, contact with :
+Building_15_Manager ;662-123-1234
+*/
+------------------------------------------
+--when 3101 entered
+/*
+Thanks for using apartment info finder
+
+Information of Apartment number :3101
+It is on Building number :3
+The building has a name of : Gamma
+managed by Department :Building234
+Building manager is : Susan Merc
+It has 3 rooms
+Now  people in the unit
+Rate : $500
+Building Size :156yd
+Pet allowence : Yes
+APT#3101 is just fine like new!
+
+For more information, contact with :
+Building_234_Manager ;662-321-3210
+*/
+----------------------------
+--when 8446 entered
+/*
+8446 is not in the data. 
+Try other Apartment number. 
+*/
+---------------------------------
+--when 'abc123' entered
+/*
+Apartment number input error!
+Try with proper Apartment number!
+*/
+
+2)
+--Shows Resident's information
+--put one of Residents ResID then it shows their information.
+--Their name, phone number, email, apt#, contract start date,
+--contract expire date, promotion number,
+--remained package using package counter function
+-- and rant_pay information using rent_pay_check procedure.
+------------------------------
+--create package
+create or replace PACKAGE res_info_pkg
+IS
+FUNCTION res_pack_rema
+(R_id Package.ResID%type)
+RETURN number;
+
+FUNCTION res_promo_full_info
+(promo_num promotion.promo#%type )
+RETURN string;
+
+procedure res_rent_pay_hist
+(R_id Rent_Pay.ResID%type);
+
+End res_info_pkg;
+/
+---------------------------------------------------
+--package body sub information of apartment and building 
+create or replace PACKAGE BODY res_info_pkg
+AS
+--package counter
+FUNCTION res_pack_rema
+(R_id Package.ResID%type)
+RETURN number
+IS
+  pack_count number;
+BEGIN
+    SELECT count(*)
+    INTO pack_count
+    FROM Package
+    WHERE ResID = R_id
+    AND Pickup = 'x';
+RETURN pack_count;
+END res_pack_rema;
+
+----------------------------------
+--promotion name information
+FUNCTION res_promo_full_info
+(promo_num promotion.promo#%type)
+RETURN string
+IS
+   ret_promo_info string(200);
+   Dedu number(5,2);
+   proex char (8);
+   prona varchar(20);
+   bon number(5,2);
+   
+BEGIN
+SELECT Deduction, Promo_Exp, Promo_name, Bonus
+INTO Dedu, proex, prona, bon
+FROM Promotion
+WHERE Promo# = 'pro1';
+ret_promo_info := 'Deduction: 0' ||trim(Dedu)||
+'   Promotion period: '||trim(proex)||
+'   promotion Name: '||trim(prona)||
+'   Bonus Gift card: $'||trim(bon); 
+
+RETURN ret_promo_info;
+END res_promo_full_info;
+-------------------------------
+--rent pay history form procedure
+PROCEDURE res_rent_pay_hist
+(R_ID Rent_Pay.ResID%type)
+IS
+    cursor cur_rent is
+    select ResID, paid_date, paid_amt
+    from rent_pay
+    where ResID = R_ID;
+BEGIN
+       FOR rec_rent IN cur_rent
+        LOOP
+        IF  rec_rent.ResID = R_ID then
+            DBMS_OUTPUT.PUT_LINE ('Paid date: '||trim (rec_rent.paid_date));
+            DBMS_OUTPUT.PUT_LI NE ('Paid amount: '||trim (rec_rent.paid_amt));
+            DBMS_OUTPUT.PUT_LINE ('');
+        end if;
+  END LOOP;
+END res_rent_pay_hist;
+END;
+/
+------------------------------
+--run main sql
+SET serveroutput ON;
+DECLARE
+    res_id RESIDENT.RESID%type;
+    res_fn RESIDENT.Res_Fname%type := '';
+    res_ln RESIDENT.Res_Lname%type := '';
+    res_ph RESIDENT.RES_PHONE%type := '';
+    res_em RESIDENT.Res_email%type := '';
+    R_apt_num Contract.apt#%type:= '';
+    R_con_st CONTRACT.CON_START_DATE%type:= '';
+    R_con_ex CONTRACT.CON_EXP_DATE%type:= '';
+    R_pro_num promotion.promo#%type:='';
+    res_pac_count number:='';
+    res_promo_info string(200):='';
+        
+    ex_resid EXCEPTION;
+    PRAGMA EXCEPTION_INIT(ex_resid,-06502);
+    
+BEGIN
+    res_id := '&ENTER_RESIDENT_ID';
+    SELECT Res_Fname, Res_Lname, Res_phone, Res_email
+    INTO res_fn, res_ln, res_ph, res_em
+    FROM RESIDENT 
+    WHERE ResID = res_id;
+    
+    SELECT apt#, Con_start_Date, Con_Exp_Date, Promo#
+    INTO R_apt_num, R_con_st, R_con_ex, R_pro_num
+    FROM Contract
+    WHERE ResID = res_id;
+--------------------------------------------
+
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Thanks for using Resident finder.');
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Information of resident number :'||res_id);
+    DBMS_OUTPUT.PUT_LINE('NAME :'||trim(res_fn)||
+    ' '||trim(res_ln));
+    DBMS_OUTPUT.PUT_LINE('Resident phone number : '||res_ph);
+    DBMS_OUTPUT.PUT_LINE('Resident email address : '||res_em);
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('The Resident has a contract of unit : '||R_apt_num);
+    DBMS_OUTPUT.PUT_LINE('Contract Valid date  : '
+    ||R_con_st||' ~ '|| R_con_ex);
+    
+    IF R_pro_num = ''  THEN
+    DBMS_OUTPUT.PUT_LINE('No promotion adjusted on this Resident. ');
+    ELSE 
+    res_promo_info := res_info_pkg.res_promo_full_info(R_pro_num);
+    DBMS_OUTPUT.PUT_LINE('Resident got promotion of : '||R_pro_num);
+    DBMS_OUTPUT.PUT_LINE('promo info : '||res_promo_info);
+    END IF;
+    
+    res_pac_count := res_info_pkg.res_pack_rema(res_id);
+    IF res_pac_count > '0'  then
+    DBMS_OUTPUT.PUT_LINE('The Resident has '||res_pac_count||' package(s).');
+    ELSIF
+    res_pac_count = '0' THEN
+    DBMS_OUTPUT.PUT_LINE('The Resident does not have any package.');    
+    ELSE 
+    DBMS_OUTPUT.PUT_LINE('No data found');    
+    END IF;
+    
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident Rent pay history : ');
+    res_info_pkg.res_rent_pay_hist(res_id);
+    
+    EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('No Resident ID found in data ');
+    WHEN ex_resid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper ID');
+
+END;
+
+----------------------------------------------
+--output check
+--when '222222' entered
+/*
+
+Thanks for using Resident finder.
+
+Information of resident number :222222
+NAME :Tim Cook
+Resident phone number : 662-222-2222
+Resident email address : www@google.com
+
+The Resident has a contract of unit : 1102
+Contract Valid date  : 17/01/01 ~ 17/12/31
+Resident got promotion of : pro3   
+promo info : Deduction: 0.25   Promotion period: 6M   promotion Name: Short_term_renewal   Bonus Gift card: $50
+The Resident has 2 package(s).
+
+Resident Rent pay history : 
+Paid date: 17/10/01
+Paid amount: 585
+
+Paid date: 17/11/01
+Paid amount: 535
+*/
+------------------------------------------
+--when 'abc1234' entered
+/*
+Resident ID input error!
+Try with proper ID
+*/
+------------------------------------------
+
+3)
+--Package checker
+--Type one of commends that you will process.
+--package_pickup_hist procedure for checking whether a resident has picked up his or her package or not.
+--Trigger for updating package table to make a pickup history.
+--when resident pick up the package then package pick up status updates 'X' to 'O'
+--trigger processed and it saves data of who's, package size, package arrieved date 
+--and when does it picked up.
+--User can check specific resident's package pick history
+--by typing their resident ID. 
+--the other procedure, remained package finder,
+--is for checking package finder which isn't picked up yet.
+--It retrieves the remained packages for a specific resident.
+-----------------------------------------
+--create/drop dumy table
+DROP TABLE Package3;
+CREATE TABLE Package3 as SELECT * FROM PACKAGE;
+-------------------------
+--create/drop table package update log 
+drop table package_pickup_hist;
+create table package_pickup_hist
+(Package_Num CHAR(6),
+Resident_ID NUMBER(38,0),
+package_size CHAR(1 BYTE),
+Pac_Arrival DATE,
+pickup_date timestamp(6)
+);
+----------------------------
+--create a trigger for updated table
+create or replace TRIGGER tri_pack_pick
+AFTER UPDATE ON Package3
+FOR EACH ROW
+BEGIN
+INSERT INTO PACKAGE_PICKUP_HIST
+(Package_Num, RESIDENT_ID, PACKAGE_SIZE, PAC_ARRIVAL, PICKUP_DATE)
+VALUES
+(:Old.pac#, :Old.RESID, :Old.PAC_SIZE, :Old.pac_arr, sysdate);
+END;
+/
+------------------------
+--trigger sample
+select * from Package3 where ResID = '222222';
+--resident ID:222222 's package has been picked up.
+update Package3 set pickup = 'o' where Pac# = 'pac2';
+select * from Package3 where ResID = '222222';
+select * from package_pickup_hist;
+--resident ID:222222 's package has been picked up again.
+update Package3 set pickup = 'o' where Pac# = 'pac10';
+select * from Package3 where ResID = '222222';
+select * from package_pickup_hist;
+--other person's package has been picked up
+update Package3 set pickup = 'o' where Pac# = 'pac5';
+select * from Package3 where ResID = '222222'; --nothing changed on  222222's package
+select * from package_pickup_hist;
+/
+-------------------------------------------------
+--create package
+create or replace PACKAGE pack_pro_pac
+IS
+procedure pro_check_pickup_history
+(i_resid NUMBER);
+procedure pro_check_pac
+(i_resid NUMBER);
+End pack_pro_pac;
+/
+--------------------------------------------
+--package body pack_pro_pac
+create or replace PACKAGE BODY pack_pro_pac
+AS
+--Pick up history finder
+PROCEDURE pro_check_pickup_history
+(i_resid NUMBER)
+is
+coun_res number;
+---------------------
+CURSOR cur_pack_his IS
+SELECT * from package_pickup_hist;
+----------------------
+BEGIN
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('Thanks for using package pickup history finder');
+DBMS_OUTPUT.PUT_LINE('');
+-------------------------
+SELECT COUNT(*) 
+INTO coun_res 
+FROM package_pickup_hist 
+WHERE RESIDENT_ID = i_resid;
+
+IF coun_res = '0' then
+DBMS_OUTPUT.PUT_LINE('Resident number: '
+||i_resid
+||' had no package pickup history.');
+DBMS_OUTPUT.PUT_LINE('Or there is no data of '||i_resid);
+------------------------
+ELSE 
+DBMS_OUTPUT.PUT_LINE('Resident '||i_resid||' has '
+||coun_res||' package pickup history');
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('PACKAGE_NUM  RESIDENT_ID  SIZE  PAC_ARRIVAL    PICKUP_DATE         ');
+
+FOR rec_pack IN cur_pack_his
+LOOP
+IF rec_pack.RESIDENT_ID = i_resid
+then
+DBMS_OUTPUT.PUT_LINE(
+rec_pack.PACKAGE_NUM||'        '
+||rec_pack.RESIDENT_ID||'        '
+||rec_pack.PACKAGE_SIZE||'    '
+||rec_pack.PAC_ARRIVAL||'     '
+||rec_pack.PICKUP_DATE
+);
+end if;
+end loop;
+end if;
+END pro_check_pickup_history;
+-----------------------------
+--remained package finder
+PROCEDURE pro_check_pac
+(i_resid NUMBER)
+is
+coun_res number;
+---------------------
+CURSOR cur_pack IS
+SELECT * from package3 where pickup = 'x';
+BEGIN
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('Thanks for using package finder for resident');
+DBMS_OUTPUT.PUT_LINE('');
+---------------------
+SELECT COUNT(*) 
+INTO coun_res 
+FROM package3 P3
+WHERE ResID = i_resid
+and P3.pickup = 'x';
+-----------------------
+IF coun_res = '0' then
+DBMS_OUTPUT.PUT_LINE('Resident number: '
+||i_resid
+||' has no package to pickup.');
+DBMS_OUTPUT.PUT_LINE('Or there is no data of '||i_resid);
+
+ELSE 
+DBMS_OUTPUT.PUT_LINE('Resident '||i_resid||' has '
+||coun_res||' packages to pickup');
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('PACKAGE_NUM  RESIDENT_ID  SIZE  PAC_ARRIVAL   PICKUP');
+
+FOR rec_pack IN cur_pack
+LOOP
+IF rec_pack.RESID = i_resid
+then
+DBMS_OUTPUT.PUT_LINE(
+rec_pack.PAC#||'        '
+||rec_pack.RESID||'        '
+||rec_pack.PAC_SIZE||'    '
+||rec_pack.PAC_ARR||'      '
+||rec_pack.PICKUP
+);
+end if;
+end loop;
+end if;
+END pro_check_pac;
+END;
+/
+-----------------------------
+SET serveroutput ON;
+DECLARE
+comm varchar2(40) := '';
+F_p_resid NUMBER(10,0) := '';
+
+ex_resid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_resid,-06502);
+----------------------
+BEGIN
+comm := '&ENTER_COMMEND_`pickuphistory`_`checkpackage`';
+F_p_resid := '&Enter_Resident_ID';
+--------------------
+IF comm = 'pickuphistory' THEN
+pack_pro_pac.pro_check_pickup_history(F_p_resid);
+--------------------
+ELSIF comm = 'checkpackage' THEN
+pack_pro_pac.pro_check_pac(F_p_resid);
+---------------------
+ELSE 
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('Wrong commend. try again');
+
+END IF;
+-------------------------------------
+    EXCEPTION
+    WHEN ex_resid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper ID');
+
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('No Resident ID found in data. ');
+    DBMS_OUTPUT.PUT_LINE('Try again with other ID. ');
+END;
+/
+------------------------------------
+--output check
+--when pickuphistory command choose
+--and '222222'entered
+/*
+Thanks for using package pickup history finder
+
+Resident 222222 has 2 package pickup history
+
+PACKAGE_NUM  RESIDENT_ID  SIZE  PAC_ARRIVAL    PICKUP_DATE         
+pac2          222222        L    17/09/10     18/04/12 02:08:40.000000
+pac10         222222        M    17/11/04     18/04/12 02:08:40.000000
+
+*/
+------------------------------------
+--when checkpackage command choose
+--and '222222' entered
+/*
+Thanks for using package finder for resident
+
+Resident number: 222222 has no package to pickup.
+Or there is no data of 222222
+*/
+-----------------------------------
+--when type 1q2w3e4r on command line
+/*
+Wrong commend. try again
+
+*/
+----------------------------------
+--when checkpackage command choose
+--and '1q2w3e' entered
+/*
+
+Resident ID input error!
+Try with proper ID
+*/
+--------------------------------
+4)
+--a package has table modifying procedures;
+--Insert and delete resident data, in case of a new resident come for an apartment,
+--or a resident is no longer our customer.
+--Once user choose the work which they will do by typing commend,
+--the resident needs to input his orher data on the resident table.
+--when new resident information adjusted, triggerS runs to update log table
+-----------------------------------
+--create dummy table
+DROP TABLE Resident5;
+CREATE TABLE Resident5 
+as SELECT * FROM Resident;
+----------------------------------
+--create resident count log
+DROP TABLE Res_count_log;
+CREATE TABLE Res_count_log 
+(user_name varchar2(20),
+date_time  timestamp(6),
+Count_number_record  number);
+/
+-----------------------------------
+--create package 
+create or replace package pac_mod_new
+is
+procedure pro_insert_res
+(N_resid NUMBER,
+N_resfname CHAR,
+N_reslname CHAR,
+N_resphone VARCHAR2,
+N_resemail VARCHAR2);
+
+procedure pro_delete_res
+(D_resid NUMBER);
+
+END pac_mod_new;
+/
+---------------------
+--build package body
+CREATE OR REPLACE PACKAGE BODY pac_mod_new
+AS
+--procedure for insert
+procedure pro_insert_res
+(N_resid NUMBER,
+N_resfname CHAR,
+N_reslname CHAR,
+N_resphone VARCHAR2,
+N_resemail VARCHAR2)
+is
+BEGIN
+INSERT INTO 
+Resident5(
+RESID, RES_FNAME,
+RES_LNAME, RES_PHONE,
+RES_EMAIL)
+VALUES(
+N_resid, N_resfname,
+N_reslname, N_resphone,
+N_resemail);
+END pro_insert_res;
+-------------------------
+--procedure for delete
+procedure pro_delete_res
+(D_resid NUMBER)
+is
+BEGIN
+DELETE FROM Resident5
+WHERE RESID = D_resid;
+END pro_delete_res;
+-------------------------
+END;
+/
+------------------------------
+Create or replace trigger tri_res_delete
+AFTER DELETE ON Resident5
+DECLARE
+    count_rec NUMBER :=0;
+BEGIN
+    Delete from Res_count_log;
+    Select count(*)
+    into count_rec
+    from Resident5;
+    Insert into Res_count_log(
+    user_name,
+    date_time ,
+    Count_number_record
+    )
+    values
+    (user, sysdate, count_rec);
+End;
+/
+-----------------------
+Create or replace trigger tri_res_insert
+AFTER INSERT ON Resident5
+DECLARE
+    count_rec NUMBER :=0;
+BEGIN
+    Delete from Res_count_log;
+    Select count(*) into count_rec from Resident5;
+    Insert into Res_count_log(
+    user_name,
+    date_time ,
+    Count_number_record
+    )
+    values(user, sysdate, count_rec);
+End;
+/
+--------------------------------
+SET serveroutput ON;
+DECLARE
+comm varchar2(40) := '';
+
+i_resid NUMBER(10) := '';
+i_resfname CHAR(12) := '';
+i_reslname CHAR(12) := '';
+i_resphone VARCHAR2(15) := '';
+i_resemail VARCHAR2(25) := '';
+
+ex_nullresid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_nullresid, -01400);
+ex_resid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_resid,-06502);
+
+BEGIN
+comm := '&Enter_your_work_`insert`_`delete`';
+i_resid := '&Enter_New_Res_ID_to_`insert`_or_`delete`_`6_number`';
+
+IF comm = 'insert' then
+
+i_resfname  := '&Enter_First_Name';
+i_reslname  := '&Enter_Last_Name';
+i_resphone  := '&Enter_Phone_number';
+i_resemail  := '&Enter_email';
+
+pac_mod_new.pro_insert_res(
+i_resid,
+i_resfname,
+i_reslname,
+i_resphone,
+i_resemail);
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident data('||
+    i_resid||') inserted successfully');
+
+ELSIF comm = 'delete' THEN
+pac_mod_new.pro_delete_res(i_resid);
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident data('||
+    i_resid||')deleted successfully');
+ELSE
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Wrong command!');
+END IF;
+----------------------------
+    EXCEPTION
+    WHEN ex_nullresid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID must be entered!');
+   
+    WHEN ex_resid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper ID');
+END;
+/
+-----------------------------------
+--output check
+SELECT * FROM Res_count_log;
+SELECT * FROM Resident5;
+
+5)
+--new resident insert manager
+--user type their data of personal information and about contract.
+-- insert procedure get data and insert into the dummy resident table. It automatically runs new
+-- resident insert trigger, then type information of contract. It’ll saved in dummy contract table
+-----------------------------------
+--create dummy table
+DROP TABLE Resident5;
+CREATE TABLE Resident5 
+as SELECT * FROM Resident;
+
+DROP TABLE Contract5;
+CREATE TABLE Contract5 
+as SELECT * FROM Contract;
+-----------------------------------
+--create package 
+create or replace package pac_ist_new
+is
+procedure pro_new_res
+(N_resid NUMBER, N_resfname CHAR, N_reslname CHAR, N_resphone VARCHAR2, N_resemail VARCHAR2);
+END pac_ist_new;
+/
+---------------------
+--build package body
+CREATE OR REPLACE PACKAGE BODY pac_ist_new
+AS
+--procedure for insert
+procedure pro_new_res
+(N_resid NUMBER, N_resfname CHAR, N_reslname CHAR, N_resphone VARCHAR2, N_resemail VARCHAR2)
+is
+BEGIN
+INSERT INTO 
+Resident5(RESID, RES_FNAME, RES_LNAME, RES_PHONE, RES_EMAIL)
+VALUES(N_resid, N_resfname, N_reslname, N_resphone, N_resemail);
+END pro_new_res;
+-------------------------
+END;
+/
+--------------------------------
+SET serveroutput ON;
+DECLARE
+i_resid NUMBER(10) := '';
+i_resfname CHAR(12) := '';
+i_reslname CHAR(12) := '';
+i_resphone VARCHAR2(15) := '';
+i_resemail VARCHAR2(25) := '';
+
+i_apt# NUMBER(10) := '';
+i_con_sdate date;
+i_con_edate date;
+i_promo CHAR(7) := '';
+
+ex_nullresid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_nullresid, -01400);
+ex_resid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_resid,-06502);
+------------------------------------------------
+BEGIN
+--type new resident information in order.
+i_resid := '&Enter_New_Res_ID_to_`insert`_`6_number`'; --946537
+i_resfname  := '&Enter_First_Name'; --Jim
+i_reslname  := '&Enter_Last_Name'; --Miorrison
+i_resphone  := '&Enter_Phone_number'; --662-452-7894
+i_resemail  := '&Enter_email'; --JJJJ@gmail.com
+
+i_apt# := '&Which_Apt_number_do_you_want_to_go_`4digit`'; --5101
+i_con_sdate := '&From_when_the_contract_start'; -- 2018-05-01
+i_con_edate := '&When_would_be_the_contract_expired'; --2019-05-01
+i_promo := '&You_have_promotion_number'; --pro5
+
+pac_mod_new.pro_insert_res(
+i_resid, i_resfname, i_reslname, i_resphone, i_resemail);
+
+INSERT INTO Contract5(RESID, APT#, CON_START_DATE, CON_EXP_DATE, PROMO#)
+values(i_resid, i_apt#, i_con_sdate, i_con_edate, i_promo);
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('Resident data('||i_resid||') inserted successfully');
+----------------------------
+    EXCEPTION
+    WHEN ex_nullresid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID must be entered!');
+   
+    WHEN ex_resid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('data input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper information');
+END;
+/
+-----------------------------------
+--output check
+SELECT * FROM Resident5;
+/*
+     RESID RES_FNAME    RES_LNAME    RES_PHONE       RES_EMAIL                
+---------- ------------ ------------ --------------- -------------------------
+    111111 Krag         Dawn         662-111-1111    qqq@google.com           
+    222222 Tim          Cook         662-222-2222    www@google.com           
+    333333 Kenny        Tong         662-333-3333    eee@google.com           
+    444444 Sandie       Gardner      662-444-4444    rrr@google.com           
+    555555 Kim          Baker        662-555-5555    ttt@google.com           
+    666666 Lewes        Kedi         662-666-6666    yyy@google.com           
+    777777 George       Hal          662-777-7777    aaa@google.com           
+    888888 Marie        Smith        662-888-8888    sss@google.com           
+    999999 Simon        Dominic      662-999-9999    qwe@google.com           
+    101010 Carmen       Monahun      662-101-1010    asd@google.com           
+    946537 Jim          Miorrison    662-452-7894    JJJJ@gmail.com
+*/
+----------------------------------------------------------------------------------
+SELECT * FROM Contract5;
+/*
+     RESID       APT# CON_STAR CON_EXP_ PROMO# 
+---------- ---------- -------- -------- -------
+    111111       1101 17/08/01 18/01/31 pro2   
+    222222       1102 17/01/01 17/12/31 pro3   
+    333333       2101 17/08/01 18/07/31 pro4   
+    444444       2101 17/08/01 18/07/31 pro3   
+    555555       2101 17/07/01 18/12/31 pro1   
+    666666       3102 17/08/01 18/07/31 pro4   
+    777777       3102 17/08/01 18/07/31 pro4   
+    888888       4201 17/01/01 18/12/31 pro5   
+    999999       6101 16/01/01 17/12/31 pro7   
+    101010       7101 17/08/01 18/07/31 pro9   
+    946537       5101 18/05/01 19/05/01 pro5
+*/
+-------------------------------------------------------------------------------------
+6)
+--Pay amount calculator
+--Resident has their own rent fee with adjusted promotion deductive and usage of electricity bill.
+--so pay amount could be charge more or less than they expected.
+--this function calculate their accurate pay by typing their resident ID.
+----------------------------------
+create or replace function pay_cal
+(i_resid number)
+return DECIMAL
+is
+    ret_rate DECIMAL(6,2);
+    ret_pro_deduc NUMBER(5,2);
+    ret_ele DECIMAL(6,2);
+    ret_pay DECIMAL(6,2);
+    ret_res_coun number;
+    
+BEGIN
+    SELECT RATE, ELE_BILL, RES_COUNT 
+    INTO ret_rate, ret_ele, ret_res_coun
+    FROM Building B, Contract C, Apartment A
+    WHERE C.RESID = i_resid
+    AND A.APT# = C.APT#
+    AND A.BUILDING# = B.BUILDING#;
+
+    SELECT DEDUCTION INTO ret_pro_deduc
+    FROM Promotion P, Contract C1
+    WHERE C1.RESID = i_resid
+    AND C1.Promo# = P.PROMO#;
+
+--monthly rate has been deducted by promotion deductive
+--and then additionally electricity bill devided by number of roommates
+    ret_pay :=
+    ret_rate * (1 + ret_pro_deduc)
+    + (ret_ele / ret_res_coun);
+
+RETURN ret_pay;
+END pay_cal ;
+/
+--------------------------------
+Set serveroutput on
+DECLARE
+r_resid number(10) := '';
+a_pay DECIMAL(6,2):= '';
+r_fname CHAR(12):= '';
+r_lname CHAR(12):= '';
+ori_rate DECIMAL(6,2):= '';
+
+ex_resid EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_resid,-06502);
+
+BEGIN
+    r_resid := '&Enter_Resident_ID';
+    a_pay := pay_cal(r_resid);
+    
+    SELECT RES_FNAME, RES_LNAME 
+    INTO r_fname, r_lname
+    FROM Resident
+    WHERE RESID = r_resid;
+    
+    SELECT RATE 
+    INTO ori_rate
+    FROM Building B, Contract C, Apartment A
+    WHERE C.RESID = r_resid
+    AND A.APT# = C.APT#
+    AND A.BUILDING# = B.BUILDING#;
+    
+    --display the result
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Thanks for using payment calculator');
+    DBMS_OUTPUT.PUT_LINE('Resident ID : '||r_resid);
+    DBMS_OUTPUT.PUT_LINE('Name : '||trim(r_fname)||' '||trim(r_lname));    
+    DBMS_OUTPUT.PUT_LINE('adjusted bill : $'||a_pay);
+    DBMS_OUTPUT.PUT_LINE('original bill : $'||ori_rate);
+    DBMS_OUTPUT.PUT_LINE('');
+    
+EXCEPTION
+    WHEN ex_resid THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Resident ID input error!');
+    DBMS_OUTPUT.PUT_LINE('Try with proper ID');
+
+END;
+------------------------
+--output check
+--when '666666' entered
+/*
+
+Thanks for using payment calculator
+Resident ID : 666666
+Name : Lewes Kedi
+adjusted bill : $578
+original bill : $500
+*/
+------------------------
+--When 'asdf' entered
+/*
+Resident ID input error!
+Try with proper ID
+*/
+
+7)
+--Damaged items total amount calculator
+--This helps to see items sperately whether it fixed or not.
+--It list which items already fixed and which items need fixed and thier cost.
+--each list finished, total amount of each list counted.
+--paid amount for fixing and total amount cost would charged for fixing.
+----------------------------------------------------------------------
+DECLARE
+sum_total DECIMAL(6,2):= 0.00;
+cursor cur_dam IS
+SELECT * FROM DAMAGED ;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE ('');
+    DBMS_OUTPUT.PUT_LINE ('Fixed Items');
+    DBMS_OUTPUT.PUT_LINE ('');
+       FOR rec_dam IN cur_dam
+        LOOP
+        IF  rec_dam.FIXED = 'o' then
+            DBMS_OUTPUT.PUT_LINE ('Fixed Item ID : '||trim (rec_dam.DamID));
+            DBMS_OUTPUT.PUT_LINE ('Apart Number : '||trim (rec_dam.apt#));
+            DBMS_OUTPUT.PUT_LINE ('Fixed Item : '||trim (rec_dam.Dam_Item));
+            DBMS_OUTPUT.PUT_LINE ('Paid Cost : $'||trim (rec_dam.Dam_Cost));
+            DBMS_OUTPUT.PUT_LINE ('');
+        END IF;
+        END LOOP;
+        
+    SELECT SUM(DAM_cost) INTO sum_total
+    from DAMAGED 
+    WHERE FIXED = 'o';
+    
+    DBMS_OUTPUT.PUT_LINE ('');
+    DBMS_OUTPUT.PUT_LINE ('Total amount paid for fixing : $'||sum_total);
+        
+----------------------------------------------------------------
+    DBMS_OUTPUT.PUT_LINE ('----------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE ('');
+    DBMS_OUTPUT.PUT_LINE ('Damaged Items');
+    DBMS_OUTPUT.PUT_LINE ('');
+       FOR rec_dam IN cur_dam
+        LOOP
+        IF  rec_dam.FIXED = 'x' then
+            DBMS_OUTPUT.PUT_LINE ('Damaged Item ID : '||trim (rec_dam.DamID));
+            DBMS_OUTPUT.PUT_LINE ('Apart Number : '||trim (rec_dam.apt#));
+            DBMS_OUTPUT.PUT_LINE ('Damaged Item : '||trim (rec_dam.Dam_Item));
+            DBMS_OUTPUT.PUT_LINE ('Cost : $'||trim (rec_dam.Dam_Cost));
+            DBMS_OUTPUT.PUT_LINE ('');
+        END IF;
+        END LOOP;
+        
+    SELECT SUM(DAM_cost) INTO sum_total
+    from DAMAGED 
+    WHERE FIXED = 'x';
+    
+    DBMS_OUTPUT.PUT_LINE ('');
+    DBMS_OUTPUT.PUT_LINE ('Total amount cost would charged : $'||sum_total);
+END;
+/
+----------------------------------------------------------
+--output check
+/*
+Fixed Items
+
+Fixed Item ID : D1
+Apart Number : 1102
+Fixed Item : Window
+Paid Cost : $100
+
+Fixed Item ID : D2
+Apart Number : 2101
+Fixed Item : Refregerator
+Paid Cost : $250
+
+Fixed Item ID : D3
+Apart Number : 2102
+Fixed Item : Door
+Paid Cost : $80
+
+Fixed Item ID : D4
+Apart Number : 5101
+Fixed Item : Sink
+Paid Cost : $30
+
+Fixed Item ID : D8
+Apart Number : 7201
+Fixed Item : Couch
+Paid Cost : $35
+
+
+Total amount paid for fixing : $495
+----------------------------------------------
+
+Damaged Items
+
+Damaged Item ID : D5
+Apart Number : 4101
+Damaged Item : Pipe
+Cost : $50
+
+Damaged Item ID : D6
+Apart Number : 4201
+Damaged Item : Pipe
+Cost : $50
+
+Damaged Item ID : D7
+Apart Number : 6101
+Damaged Item : Wall
+Cost : $40
+
+Damaged Item ID : D9
+Apart Number : 3102
+Damaged Item : Window
+Cost : $100
+
+Damaged Item ID : D10
+Apart Number : 1101
+Damaged Item : Dishwasher
+Cost : $125
+
+Total amount cost would charged : $365
+*/
+----------------------------------------------------------------------------
+--8)
+--update log for the resident and manager table using trigger
+--when some information has updated in each table, a trigger run and store the changed information into the
+--update log table. It records when and which table's which row have been updated, and the 
+--log table also indicates the data of changed attributes that from what value to what value has updated. 
+--finally a trigger for counting how many rows changed on each table.
+-------------------------------------------------------------------
+--DROP/CREATE update log table
+DROP TABLE res_up_log;
+CREATE TABLE res_up_log 
+(date_time timestamp(6),
+Updated_table varchar2(20),
+Updated_row varchar2(20),
+From_what varchar2(30),
+To_what varchar2(30));
+
+DROP TABLE res_up_log_count;
+CREATE TABLE res_up_log_count 
+(updated_table  varchar2(20),
+Number_of_update number(3));
+---------------------
+--create dummy table
+DROP TABLE Resident5;
+CREATE TABLE Resident5 
+as SELECT * FROM Resident;
+----------------------
+DROP TABLE Manager5;
+CREATE TABLE Manager5 
+as SELECT * FROM Manager;
+/
+----------------------------------
+--create Resident Fname update trigger
+create or replace TRIGGER tri_up_res_Fname
+AFTER UPDATE OF Res_Fname ON Resident5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Resident', 'Res_Fname',
+:Old.Res_Fname, :New.Res_Fname);
+END;
+/
+--create Resident Lname update trigger
+create or replace TRIGGER tri_up_res_Lname
+AFTER UPDATE OF Res_Lname ON Resident5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Resident', 'Res_Lname',
+:Old.Res_Lname, :New.Res_Lname);
+END;
+/
+--create Resident phone update trigger
+create or replace TRIGGER tri_up_res_phone
+AFTER UPDATE OF Res_phone ON Resident5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table
+,Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Resident', 'Res_phone',
+:Old.Res_phone, :New.Res_phone);
+END;
+/
+--create Resident email update trigger
+create or replace TRIGGER tri_up_res_email
+AFTER UPDATE OF Res_email ON Resident5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Resident', 'Res_email',
+:Old.Res_email, :New.Res_email);
+END;
+/
+-----------------------------------
+--create Manager Fname update trigger
+create or replace TRIGGER tri_up_mg_Fname
+AFTER UPDATE OF Mgr_Fname ON Manager5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Manager', 'Mgr_Fname',
+:Old.Mgr_Fname, :New.Mgr_Fname);
+END;
+/
+--create Manager Lname update trigger
+create or replace TRIGGER tri_up_mg_Lname
+AFTER UPDATE OF Mgr_Lname ON Manager5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Manager', 'Mgr_Lname', 
+:Old.Mgr_Lname, :New.Mgr_Lname);
+END;
+/
+--create Manager phone update trigger
+create or replace TRIGGER tri_up_mg_phone
+AFTER UPDATE OF Mgr_phone ON Manager5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Manager', 'Mgr_phone', 
+:Old.Mgr_phone, :New.Mgr_phone);
+END;
+/
+--create Manager email update trigger
+create or replace TRIGGER tri_up_mg_email
+AFTER UPDATE OF Mgr_email ON Manager5
+FOR EACH ROW
+BEGIN
+INSERT INTO 
+res_up_log(date_time,Updated_table,
+Updated_row,From_what,To_what)
+VALUES
+(sysdate, 'Manager', 'Mgr_email', 
+:Old.Mgr_email, :New.Mgr_email);
+END;
+/
+---------------------------------------
+create or replace TRIGGER tri_up_count
+AFTER INSERT ON res_up_log
+DECLARE
+Num_update_res number := 0;
+Num_update_mgr number := 0;
+BEGIN
+DELETE FROM res_up_log_count;
+SELECT COUNT(*) INTO Num_update_res 
+FROM res_up_log WHERE Updated_table = 'Resident';
+SELECT COUNT(*) INTO Num_update_mgr 
+FROM res_up_log WHERE Updated_table = 'Manager';
+
+INSERT INTO res_up_log_count
+(updated_table, Number_of_update)
+VALUES
+('Resident',Num_update_res);
+INSERT INTO res_up_log_count
+(updated_table, Number_of_update)
+VALUES
+('Manager',Num_update_mgr);
+END;
+/
+
+----------------------------------------
+UPDATE Resident5 SET Res_Fname = 'Kammel'
+WHERE ResID = '222222';
+UPDATE Resident5 SET Res_Lname = 'Crain'
+WHERE ResID = '333333';
+UPDATE Resident5 SET Res_phone = '662-124-8745'
+WHERE ResID = '444444';
+UPDATE Resident5 SET Res_email = 'owie@gmail.com'
+WHERE ResID = '555555';
+UPDATE Resident5 SET Res_Fname = 'Oliber'
+WHERE ResID = '666666';
+-----------------------
+UPDATE Manager5 SET Mgr_Fname = 'Braian'
+WHERE MgrID = 'M321321';
+UPDATE Manager5 SET Mgr_Lname = 'Gill'
+WHERE MgrID = 'M456456';
+UPDATE Manager5 SET Mgr_phone = '662-553-7733'
+WHERE MgrID = 'M654654';
+UPDATE Manager5 SET Mgr_email = 'MGwiil@gmail.com'
+WHERE MgrID = 'M789789';
+SELECT * FROM Resident5;
+SELECT * FROM Manager5;
+SELECT * FROM res_up_log;
+SELECT * FROM res_up_log_count;
+------------------------------------------------------------------------------
+--output
+/*
+-- update_log table
+DATE_TIME                   UPDATED_TABLE        UPDATED_ROW          FROM_WHAT                      TO_WHAT                       
+--------------------------- -------------------- -------------------- ------------------------------ ------------------------------
+18/05/06 03:30:01.000000000 Resident             Res_Fname            Tim                            Kammel                        
+18/05/06 03:30:01.000000000 Resident             Res_Lname            Tong                           Crain                         
+18/05/06 03:30:01.000000000 Resident             Res_phone            662-444-4444                   662-124-8745                  
+18/05/06 03:30:01.000000000 Resident             Res_email            ttt@google.com                 owie@gmail.com                
+18/05/06 03:30:01.000000000 Resident             Res_Fname            Lewes                          Oliber                        
+18/05/06 03:30:01.000000000 Manager              Mgr_Fname            Susan                          Braian                        
+18/05/06 03:30:01.000000000 Manager              Mgr_Lname            Kale                           Gill                          
+18/05/06 03:30:01.000000000 Manager              Mgr_phone            662-654-6543                   662-553-7733                  
+18/05/06 03:30:01.000000000 Manager              Mgr_email            xxx@google.com                 MGwiil@gmail.com              
+------------------------------------------------------------------------------------
+--log counter table
+UPDATED_TABLE        NUMBER_OF_UPDATE
+--------------------             ----------------
+Resident                            5
+Manager                             4
+*/
+----------------------------------------------------------------------------------------------
+--9)
+--user input specific month( ex) ’10’ or ‘Oct’) then resident’s information and paid date shows who have 
+--paid for that month.
+
+SET serveroutput ON;
+DECLARE
+mon varchar2(15) := '&Enter_month___EX_`Oct`_OR_`10`';
+CURSOR CUR IS
+SELECT RES.ResID, RES.Res_Fname, REN.Paid_date 
+FROM Rent_pay REN, Resident RES
+WHERE REN.ResID = RES.ResID;
+--------------------------------
+BEGIN
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE ('Resident who paid the rent of '||mon);
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE ('Resident ID    First Name     Paid Date');
+DBMS_OUTPUT.PUT_LINE ('-------------    ------------     -----------');
+-----------------------
+IF mon = '01' OR mon = 'Jen' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-01-31'
+AND REC.Paid_date >= '2017-01-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+-----------------------
+ELSIF mon = '02' OR mon = 'Feb' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-02-28'
+AND REC.Paid_date >= '2017-02-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+------------------------
+ELSIF mon = '03' OR mon = 'Mar' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-03-31'
+AND REC.Paid_date >= '2017-03-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+------------------------
+ELSIF mon = '04' OR mon = 'Apr' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-04-30'
+AND REC.Paid_date >= '2017-04-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+------------------------
+ELSIF mon = '05' OR mon = 'May' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-05-31'
+AND REC.Paid_date >= '2017-05-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+------------------------
+ELSIF mon = '06' OR mon = 'Jun' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-06-30'
+AND REC.Paid_date >= '2017-06-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+---------------------
+ELSIF mon = '07' OR mon = 'Jul' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-07-31'
+AND REC.Paid_date >= '2017-07-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+----------------------
+ELSIF mon = '08' OR mon = 'Aug' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-08-31'
+AND REC.Paid_date >= '2017-08-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+---------------------
+ELSIF mon = '09' OR mon = 'Sep' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-09-30'
+AND REC.Paid_date >= '2017-09-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+---------------------
+ELSIF mon = '10' OR mon = 'Sep' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-10-31'
+AND REC.Paid_date >= '2017-10-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+----------------------
+ELSIF mon = '11' OR mon = 'Nov' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-11-30'
+AND REC.Paid_date >= '2017-11-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+----------------------
+ELSIF mon = '12' OR mon = 'Dec' THEN
+FOR REC IN CUR
+LOOP
+IF REC.Paid_date <= '2017-12-31'
+AND REC.Paid_date >= '2017-12-01' THEN
+DBMS_OUTPUT.PUT_LINE (' '||REC.RESID||'        '||REC.RES_FNAME||'   '||REC.PAID_DATE);
+END IF;
+END LOOP;
+END IF;
+-------------------------
+END;
+/
+---------------------------------------------------------
+--output
+/*
+--input 'Oct'
+
+Resident who paid the rent of Oct
+
+Resident ID    First Name     Paid Date
+ 222222        Tim            17/10/01
+ 444444        Sandie         17/10/02
+ 777777        George         17/10/02
+--------------------------
+--input '11' 
+Resident who paid the rent of 11
+
+Resident ID    First Name     Paid Date
+ 111111        Krag           17/11/04
+ 222222        Tim            17/11/01
+ 333333        Kenny          17/11/02
+ 555555        Kim            17/11/02
+ 666666        Lewes          17/11/02
+ 777777        George         17/11/03
+ 888888        Marie          17/11/03
+------------------------------------------------------------------------------------------------------
+--10)
+--Facility total cost calculator grouped by each department, and the date.
+-------------------------------------------
+SET serveroutput ON;
+DECLARE
+CURSOR CUR IS
+SELECT Dep, SUM(Fac_cost) Total_cost
+FROM Facility
+GROUP BY Dep;
+
+CURSOR CUR1 IS
+SELECT Acquision_date, SUM(Fac_cost) Total_cost
+FROM Facility
+GROUP BY Acquision_date;
+
+BEGIN
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE ('Total Facility Cost of each Department');
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE (' Department       Total Cost');
+DBMS_OUTPUT.PUT_LINE ('------------      -------------');
+
+FOR REC IN CUR
+    LOOP
+DBMS_OUTPUT.PUT_LINE (' '||LPAD(REC.DEP,10)
+||'        $'||trim(REC.Total_cost));
+    
+    END LOOP;
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE ('-----------------------------------------');
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE ('Total Facility Cost on the date ');
+DBMS_OUTPUT.PUT_LINE ('');
+DBMS_OUTPUT.PUT_LINE (' Acquision_date     Total Cost');
+DBMS_OUTPUT.PUT_LINE ('---------------     -----------');
+
+FOR REC IN CUR1
+    LOOP
+DBMS_OUTPUT.PUT_LINE (' '||LPAD(REC.Acquision_date,9)
+||'          $'||trim(REC.Total_cost));
+    END LOOP;
+END;
+/
+--output
+/*
+Total Facility Cost of each Department
+
+ Department       Total Cost
+------------      -------------
+    Janitor        $150
+     Office        $1450
+  Frontdesk        $1075
+  Guestroom        $1350
+
+-----------------------------------------
+
+Total Facility Cost on the date 
+
+ Acquision_date     Total Cost
+---------------     -----------
+  16/08/10         $200
+  15/07/25         $2000
+  16/08/16         $150
+  16/07/05         $650
+16/03/13         $1025
+*/
+------------------------------------------------------------------------------------------------
+--11)
+--calculate the average electric bill first and find the unit and resident who
+-- charged more than average electric bill
+-------------------------------------------
+SET serveroutput ON;
+DECLARE
+AVG_B INTEGER(5,2);
+
+CURSOR CUR IS
+Select Res_Fname, Res_Lname, A1.apt#, A1.Ele_Bill
+From Resident R1, Contract C1, apartment A1,
+(select avg(Ele_Bill) ELE_AVG 
+from Apartment) AVGA
+Where A1.apt# in
+(Select apt# 
+from apartment 
+where Ele_Bill != 0)
+AND A1.Ele_Bill >= AVGA.ELE_AVG
+AND R1.ResID = C1.ResID
+AND A1.APT# = C1.APT#;
+----------------------------
+BEGIN
+select avg(Ele_Bill) 
+INTO AVG_B
+from Apartment;
+DBMS_OUTPUT.PUT_LINE('Average Electric bill : $'||AVG_B);
+
+DBMS_OUTPUT.PUT_LINE('Apartments that more charged than average for Electric bill:');
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE(' Resident name         APT#     Elec_Bill');
+DBMS_OUTPUT.PUT_LINE(' ------------------    ----     ---------');
+
+FOR REC IN CUR
+ LOOP
+    DBMS_OUTPUT.PUT_LINE(' '||lpad(REC.Res_Fname,10)||
+    ''||lpad(REC.Res_Lname,10)||
+    ''||lpad(REC.apt#,6)||'     $'||rpad(REC.Ele_Bill,4)); 
+ END LOOP;
+END;
+/
+-----------------------------------------------------------------
+--output
+/*
+Average Electric bill : $46.43
+Apartments that more charged than average for Electric bill:
+
+ Resident name         APT#     Elec_Bill
+ ------------------        ----     ---------
+ Kenny     Tong        2101     $80  
+ Sandie    Gardner     2101     $80  
+ Kim       Baker       2101     $80  
+ Lewes     Kedi        3102     $55  
+ George    Hal         3102     $55  
+*/
+-------------------------------------------------------------------------------------
+--12)
+--Login process
+--Manager enters their email address and password to access
+--once they loged in, their departmant and hotline number showen.
+SET serveroutput ON;
+DECLARE
+I_email VARCHAR2(20);
+I_pass VARCHAR2(25);
+Mfname VARCHAR2(20);
+MID VARCHAR2(10);
+DEPA VARCHAR2(15);
+HOTL NUMBER(5);
+
+ex_val  EXCEPTION;
+PRAGMA EXCEPTION_INIT(ex_val,-06502);
+BEGIN
+I_email := '&Enter_login_email'; -- ddd@google.com
+I_pass := '&Enter_Password';   --ddd
+Select Mgr_Fname, MGRID
+INTO Mfname, MID
+FROM Manager
+WHERE Mgr_email = I_email
+AND Mgr_password = I_pass;
+
+DBMS_OUTPUT.PUT_LINE('');
+IF Mfname is not null
+THEN
+DBMS_OUTPUT.PUT_LINE('Valid User');
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('Welcome '||trim(Mfname)||'!');
+SELECT Dep, Hotline_num
+INTO DEPA, HOTL
+FROM Departments
+WHERE MgrID = MID;
+DBMS_OUTPUT.PUT_LINE('Department: '||DEPA);
+DBMS_OUTPUT.PUT_LINE('HotLine number: '||HOTL);
+
+
+
+ELSE
+DBMS_OUTPUT.PUT_LINE('Invalid User!');
+DBMS_OUTPUT.PUT_LINE('Try again');
+END IF;
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE('technical support center : 662-742-7515');
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('No data found Or Invalid User!');
+    DBMS_OUTPUT.PUT_LINE('Try again!');
+WHEN ex_val THEN
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('improper input!');
+    DBMS_OUTPUT.PUT_LINE('Try again!');
+END;
+/
+------------------------------------------------------------------
+--output
+/*
+--input ‘ddd@google.com’ , ‘ddd’
+Valid User
+
+Welcome Jim!
+Department: Building15
+HotLine number: 103
+
+technical support center : 662-742-7515
+---------------------------------------------------
+--input ‘zzz@google.com’ , ‘zzz’
+Valid User
+
+Welcome Anna!
+Department: Office
+HotLine number: 102
+
+technical support center : 662-742-7515
+--------------------------------------------------------
+--input ‘A@(#RUFI’ , ‘::KFA@#IH’ – just random values
+No data found Or Invalid User!
+Try again!
+*/
